@@ -1,23 +1,16 @@
 package com.developerscambodia.devcoursesservice.section;
 
-import com.developerscambodia.devcoursesservice.course.Course;
 import com.developerscambodia.devcoursesservice.course.CourseRepository;
-import com.developerscambodia.devcoursesservice.course.web.CourseDto;
 import com.developerscambodia.devcoursesservice.section.web.CreateSectionDto;
 import com.developerscambodia.devcoursesservice.section.web.SectionDto;
 import com.developerscambodia.devcoursesservice.section.web.UpdateSectionDto;
 import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.apache.juli.logging.Log;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,6 +33,8 @@ public class SectionServiceImpl implements SectionService {
     public SectionDto findSectionByUuid(String uuid) {
         Section section= sectionRepository.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("section not found with UUID: " + uuid));
+
+
 
         return sectionMapper.sectionToSectionDto(section);
     }
@@ -74,17 +69,53 @@ public class SectionServiceImpl implements SectionService {
 
         sectionRepository.delete(existingSection);
     }
+//
+//    @Override
+//    public List<Section> getAllSectionsWithCourseUuid() {
+//        return sectionRepository.findAllSectionsWithCourseUuid();
+//    }
+
+//    @Override
+//    public Page<SectionDto> findListSections(int page, int size) {
+//        PageRequest pageable = PageRequest.of(page, size);
+//        Page<Section> sectionPage = sectionRepository.findAll(pageable);
+//
+//        // Convert Page<Section> to Page<SectionDto> using map function
+//        Page<SectionDto> sectionDtoPage = sectionPage.map(section -> {
+//            SectionDto sectionDto = sectionMapper.sectionToSectionDto(section);
+//
+//            return sectionDto;
+//        });
+//
+//        return sectionDtoPage;
+//    }
 
     @Override
-    public Page<SectionDto> findListSections(int page, int size) {
+    public Page<SectionDto> findListSections(String courseUuid, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
-        Page<Section> sectionPage = sectionRepository.findAll(pageable);
+        Page<Section> sectionPage;
 
-        // Convert Page<Course> to Page<CourseDto> using map function
-        Page<SectionDto> sectionDto = sectionPage.map(sectionMapper::sectionToSectionDto);
+        if (courseUuid != null && !courseUuid.isEmpty()) {
+            sectionPage = sectionRepository.findByCourseUuid(courseUuid, pageable);
+        } else {
+            sectionPage = sectionRepository.findAll(pageable);
+        }
 
-        return sectionDto;
+        // Convert Page<Section> to Page<SectionDto> using map function
+        Page<SectionDto> sectionDtoPage = sectionPage.map(section -> sectionMapper.sectionToSectionDto(section));
+
+        return sectionDtoPage;
     }
+
+//    @Override
+//    public List<Section> getSectionsByCourseId(String courseId) {
+//        return sectionRepository.findByCourseId(courseId);
+//    }
+//
+//    @Override
+//    public List<Section> getSectionsByCourseUuid(String courseUuid) {
+//        return sectionRepository.findByCourseUuid(courseUuid);
+//    }
 
 
 }

@@ -4,19 +4,25 @@ import com.developerscambodia.devcoursesservice.category.web.CategoryDto;
 import com.developerscambodia.devcoursesservice.course.Course;
 import com.developerscambodia.devcoursesservice.course.CourseMapper;
 import com.developerscambodia.devcoursesservice.course.CourseRepository;
+import com.developerscambodia.devcoursesservice.course.web.CourseDto;
+import com.developerscambodia.devcoursesservice.section.Section;
+import com.developerscambodia.devcoursesservice.section.SectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CategorySeviceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
-//    private final CourseRepository courseRepository;
+    private final CourseRepository courseRepository;
+    private final CourseMapper courseMapper;
+    private final SectionRepository sectionRepository;
 //    private final CourseMapper courseMapper;
     @Override
     public CategoryDto createNewCategory(CategoryDto categoryDto) {
@@ -55,5 +61,42 @@ public class CategorySeviceImpl implements CategoryService {
         // Delete the category from the database
         categoryRepository.delete(category);
     }
+
+    @Override
+    public Optional<Category> findCategoryByUuidWithCourse(String categoryUuid) {
+        Optional<Category> optionalCategory = categoryRepository.findByUuid(categoryUuid);
+
+        if (optionalCategory.isPresent()) {
+            Category category = optionalCategory.get();
+            List<Course> courses = courseRepository.findByCategoryUuid(categoryUuid);
+
+            // Fetch and set courses for the category
+            category.setCourses(courses);
+
+            // Fetch and set sections for each course
+            for (Course course : courses) {
+                List<Section> sections = sectionRepository.findByCourseUuid(course.getUuid());
+                course.setSections(sections);
+            }
+
+            return Optional.of(category);
+        } else {
+            return Optional.empty();
+        }
+//        Optional<Category> optionalCategory = categoryRepository.findByUuid(categoryUuid);
+//
+//        if (optionalCategory.isPresent()) {
+//            Category category = optionalCategory.get();
+//            List<Course> courses = courseRepository.findByCategoryUuid(categoryUuid);
+//
+//            category.setCourses(courses);
+//            return Optional.of(category);
+//        } else {
+//            return Optional.empty();
+//        }
+    }
+
+
+
 
 }

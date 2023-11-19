@@ -4,6 +4,7 @@ import com.developerscambodia.devcoursesservice.base.BaseApi;
 import com.developerscambodia.devcoursesservice.category.Category;
 import com.developerscambodia.devcoursesservice.category.CategoryRepository;
 import com.developerscambodia.devcoursesservice.category.CategoryService;
+import com.developerscambodia.devcoursesservice.course.Course;
 import com.developerscambodia.devcoursesservice.course.CourseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,11 @@ public class CategoryController {
         return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
     }
 
+//    @GetMapping("/courses/{courseUuid}")
+//    public List<Category> getCategoriesByCourseUuid(@PathVariable String courseUuid) {
+//        return categoryService.getCourseByCategoryUuid(courseUuid);
+//    }
+
 
     @GetMapping("")
     public BaseApi<List<CategoryDto>> findAllCategory() {
@@ -47,17 +53,18 @@ public class CategoryController {
     }
 
 
-    @GetMapping("/{uuid}")
-    public BaseApi<?> findCategoryByUuid(@PathVariable String uuid) {
 
-        var category = categoryService.findCategoryByUuid(uuid);
-        return BaseApi.builder()
-                .status(true)
-                .code(HttpStatus.OK.value())
-                .message("Category Has Been Found Successfully")
-                .timeStamp(LocalDateTime.now())
-                .data(category)
-                .build();
+
+
+    @GetMapping("/{uuid}")
+    public ResponseEntity<Category> findCategoryByUuid(@PathVariable String uuid) {
+        Optional<Category> category = categoryService.findCategoryByUuidWithCourse(uuid);
+
+        if (category.isPresent()) {
+            return ResponseEntity.ok(category.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 
@@ -70,6 +77,8 @@ public class CategoryController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+
 
 
 

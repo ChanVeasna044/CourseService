@@ -20,4 +20,6 @@ public class Category {
     private String id;
     private String uuid;
     private String name;
+//    @DBRef
+    private List<Course> courses;
 }

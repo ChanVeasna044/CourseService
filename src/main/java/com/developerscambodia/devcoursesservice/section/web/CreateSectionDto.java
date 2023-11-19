@@ -5,8 +5,8 @@ import lombok.Builder;
 
 @Builder
 public record CreateSectionDto(
-
+        String uuid,
         String name,
-        Course course
+        String courseUuid
 ) {
 }

@@ -12,6 +12,7 @@ public interface CourseMapper {
 
     Course courseDtoToCourse(CourseDto courseDto);
 
+
     CourseDto courseToCourseDto(Course course);
     Course createCourseDtoToCourse(CreateCourseDto createCourseDto);
 

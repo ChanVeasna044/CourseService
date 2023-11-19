@@ -1,6 +1,7 @@
-package com.developerscambodia.devcoursesservice.feign;
+package com.developerscambodia.devcoursesservice.video;
 
 import lombok.*;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -9,8 +10,8 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
-public class VideoResponse {
+@Document("video")
+public class Video {
 
     private String id;
     private String uuid;

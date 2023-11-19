@@ -4,6 +4,7 @@ import com.developerscambodia.devcoursesservice.base.BaseApi;
 import com.developerscambodia.devcoursesservice.base.BaseError;
 import com.developerscambodia.devcoursesservice.course.Course;
 import com.developerscambodia.devcoursesservice.course.CourseMapper;
+import com.developerscambodia.devcoursesservice.course.CourseRepository;
 import com.developerscambodia.devcoursesservice.course.CourseService;
 import com.developerscambodia.devcoursesservice.section.Section;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -28,83 +31,42 @@ import java.util.Optional;
 public class CourseController {
 
     private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
     @PostMapping
-    public BaseApi<?> createNewCourse(@RequestBody CreateCourseDto createCourseDto) {
-
-
-       CreateCourseDto createdCourse = courseService.createNewCourse(createCourseDto);
-        //var courseDto = courseMapper.courseToCourseDto(createdCourse);
-
-        return BaseApi.builder()
-                .status(true)
-                .code(HttpStatus.OK.value())
-                .message("Course Create Successfully")
-                .timeStamp(LocalDateTime.now())
-                .data(createdCourse)
-                .build();
-
+    public ResponseEntity<String> createCourse(@RequestBody CreateCourseDto createCourseDto) {
+        courseService.createNewCourse(createCourseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Course created successfully");
     }
+@GetMapping
+public BaseApi<Page<CourseDto>> getListOfCourses(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
 
-    @GetMapping
+    Page<CourseDto> courseDtoPage = courseService.findListCourses(page, size);
 
-    public BaseApi<Page<CourseDto>> findListCourses(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    BaseApi<Page<CourseDto>> course = BaseApi.<Page<CourseDto>>builder()
+            .message("Find List Success")
+            .code(HttpStatus.OK.value())
+            .status(true)
+            .timeStamp(LocalDateTime.now())
+            .data(courseDtoPage)
+            .build();
 
-        Page<CourseDto> course = courseService.findListCourses(page, size);
-
-        BaseApi<Page<CourseDto>> response = BaseApi.<Page<CourseDto>>builder()
-                .status(true)
-                .code(HttpStatus.OK.value())
-                .message("Courses Retrieved Successfully")
-                .timeStamp(LocalDateTime.now())
-                .data(course)
-                .build();
-
-        return response;
-    }
-
-    @GetMapping("/{uuid}")
-    public BaseApi<?> findCourseByUuid(@PathVariable String uuid) {
-
-        var course = courseService.findCourseByUuid(uuid);
-        return BaseApi.builder()
-                .status(true)
-                .code(HttpStatus.OK.value())
-                .message("Course Has Been Found Successfully")
-                .timeStamp(LocalDateTime.now())
-                .data(course)
-                .build();
-    }
+    return course;
+}
 
     @DeleteMapping("/{uuid}")
-    public BaseApi<?> removeCourseByUuid(@PathVariable String uuid) {
-        CourseDto deletedCourse = courseService.removeCourseByUuid(uuid);
+    public ResponseEntity<String> removeCourseByUuid(@PathVariable String uuid) {
+            courseService.removeCourseByUuid(uuid);
+            return new ResponseEntity<>("Course with UUID " + uuid + " has been successfully removed", HttpStatus.OK);
 
-        if (deletedCourse != null) {
-            return BaseApi.builder()
-                    .status(true)
-                    .code(HttpStatus.OK.value())
-                    .message("Course Has Been Deleted Successfully")
-                    .timeStamp(LocalDateTime.now())
-                    .data(deletedCourse)
-                    .build();
-        } else {
-            return BaseApi.builder()
-                    .status(false)
-                    .code(HttpStatus.NOT_FOUND.value())
-                    .message("Course not found with UUID: " + uuid)
-                    .timeStamp(LocalDateTime.now())
-                    .build();
-        }
     }
 
 
     @PutMapping("/{uuid}")
     public BaseApi<?> editCourseByUuid(@PathVariable String uuid, @RequestBody CourseDto updatedCourseDto) {
         CourseDto updatedCourse = courseService.editCourseByUuid(uuid, updatedCourseDto);
-        if (updatedCourse != null) {
             return BaseApi.builder()
                     .status(true)
                     .code(HttpStatus.OK.value())
@@ -112,32 +74,60 @@ public class CourseController {
                     .timeStamp(LocalDateTime.now())
                     .data(updatedCourse)
                     .build();
-        } else {
-            return BaseApi.builder()
-                    .status(false)
-                    .code(HttpStatus.NOT_FOUND.value())
-                    .message("Course not found with UUID: " + uuid)
+
+    }
+
+//    @GetMapping("/{uuid}")
+//    public ResponseEntity<?> getCourseByUuidWithSections(@PathVariable String uuid) {
+//        Optional<Course> optionalCourse = courseService.findCourseByUuidWithSections(uuid);
+//
+//        if (optionalCourse.isPresent()) {
+//            return ResponseEntity.ok(optionalCourse.get());
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
+
+
+    @GetMapping("/{uuid}")
+    public BaseApi<Course> getCourseByUuidWithSections(@PathVariable String uuid) {
+        Optional<Course> optionalCourse = courseService.findCourseByUuidWithSections(uuid);
+
+            Course course = optionalCourse.get();
+            return BaseApi.<Course>builder()
+                    .message("Course found successfully")
+                    .code(HttpStatus.OK.value())
+                    .status(true)
                     .timeStamp(LocalDateTime.now())
+                    .data(course)
                     .build();
+
+    }
+
+
+
+    @GetMapping("/category/{categoryUuid}")
+    public List<Course> getCategoryByCourseUuid(@PathVariable String categoryUuid) {
+        return courseService.getCourseByCategoryUuid(categoryUuid);
+    }
+
+    @GetMapping("/{courseUuid}/discounted-price")
+    public ResponseEntity<BigDecimal> getDiscountedPrice(@PathVariable String courseUuid) {
+        // Assuming you have a method to retrieve a course by UUID from your repository
+        Course course = courseRepository.findByUuid(courseUuid).orElse(null);
+
+        if (course != null) {
+            BigDecimal discountedPrice = courseService.calculateDiscountedPrice(course);
+            return ResponseEntity.ok(discountedPrice);
+        } else {
+            // Handle course not found
+            return ResponseEntity.notFound().build();
         }
     }
 
 
 
 
-//    @GetMapping("/category/{categoryName}")
-//    public List<Course> findListCoursesByCategory(@PathVariable String categoryName) {
-//
-//        return courseService.filterCoursesByCategory(categoryName);
-//    }
-
-
-
-    @GetMapping("/{uuid}/sections")
-    public ResponseEntity<List<Section>> getSectionsByCourseUuid(@PathVariable String uuid) {
-        List<Section> sections = courseService.getSectionsByCourseUuid(uuid);
-        return new ResponseEntity<>(sections, HttpStatus.OK);
-    }
 
 }
 

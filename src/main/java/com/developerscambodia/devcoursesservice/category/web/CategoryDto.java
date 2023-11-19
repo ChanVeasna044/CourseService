@@ -7,7 +7,7 @@ import java.util.List;
 public record CategoryDto(
 
          String uuid,
-        String name
+        String name, List<Course> courses
 
 ) {
 }

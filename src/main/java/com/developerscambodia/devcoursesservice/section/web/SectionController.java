@@ -38,13 +38,19 @@ public class SectionController {
     }
 
     @GetMapping
-    public Page<SectionDto> findSections(
-
+    public ResponseEntity<Page<SectionDto>> getSections(
+            @RequestParam(required = false) String courseUuid,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        return sectionService.findListSections( page, size);
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<SectionDto> sectionDtoPage = sectionService.findListSections(courseUuid, page, size);
+        return new ResponseEntity<>(sectionDtoPage, HttpStatus.OK);
     }
+
+//    @GetMapping("/all")
+//    public List<Section> getAllSectionsWithCourseUuid() {
+//        return sectionService.getAllSectionsWithCourseUuid();
+//    }
 
     @GetMapping("/{uuid}")
     public BaseApi<?> findSectionByUuid(@PathVariable String uuid) {
@@ -114,16 +120,13 @@ public class SectionController {
     }
 
 
-//    }
-//@GetMapping("/course/{uuid}")
-//public List<Section> getSectionsByCourseId(@PathVariable String uuid) {
-//    return sectionService.getSectionsByCourseUuid(uuid);
-//}
 
-//    @GetMapping("/course/{courseId}")
-//    public List<Section> getSectionsByCourseId(@PathVariable String courseId) {
-//        return sectionService.getSectionsByCourseId(courseId);
+//    @GetMapping("/course/{courseUuid}")
+//    public List<Section> getSectionsByCourseUuid(@PathVariable String courseUuid) {
+//        return sectionService.getSectionsByCourseUuid(courseUuid);
 //    }
+
+
 
 
 

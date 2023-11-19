@@ -3,17 +3,16 @@ package com.developerscambodia.devcoursesservice.course;
 import com.developerscambodia.devcoursesservice.course.web.CourseDto;
 import com.developerscambodia.devcoursesservice.course.web.CreateCourseDto;
 import com.developerscambodia.devcoursesservice.section.Section;
+import com.developerscambodia.devcoursesservice.section.SectionMapper;
 import com.developerscambodia.devcoursesservice.section.SectionRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,55 +27,56 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final MongoTemplate mongoTemplate;
    private final SectionRepository sectionRepository;
+   private final SectionMapper sectionMapper;
 
+
+
+
+    //Star
+//    @Override
+//    public CreateCourseDto createNewCourse(CreateCourseDto createCourseDto) {
+//
+//        Course course = courseMapper.createCourseDtoToCourse(createCourseDto);
+//        course.setUuid(UUID.randomUUID().toString());
+//        courseRepository.save(course);
+//
+//
+//        return courseMapper.fromCreateCourseDtoToCourse(course);
+//    }
+
+    //end
 
 
     @Override
-    public CreateCourseDto createNewCourse(CreateCourseDto createCourseDto) {
+    public void createNewCourse(CreateCourseDto createCourseDto) {
 
         Course course = courseMapper.createCourseDtoToCourse(createCourseDto);
+
+        // Set a universally unique identifier (UUID) for the course
         course.setUuid(UUID.randomUUID().toString());
+        // Create a new Course object by using a mapper to convert the CreateCourseDto
         courseRepository.save(course);
-
-
-        return courseMapper.fromCreateCourseDtoToCourse(course);
     }
 
     @Override
     public Page<CourseDto> findListCourses(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
+
+        // Retrieve a paginated list of courses from the repository using the created PageRequest.
         Page<Course> coursePage = courseRepository.findAll(pageable);
 
-        // Convert Page<Course> to Page<CourseDto> using map function
-        Page<CourseDto> courseDtoPage = coursePage.map(courseMapper::courseToCourseDto);
-
-        return courseDtoPage;
+        // Map the Page<Course> to a Page<CourseDto> using the courseMapper.
+        return coursePage.map(courseMapper::courseToCourseDto);
     }
-
-    /*@Override
-    public CourseDto findCourseByUuid(String uuid) {
-        Course course = courseRepository.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("Course not found with UUID: " + uuid));
-        List<Section> sections = course.getSections();
-
-        return courseMapper.courseToCourseDto(course);
-
-
-
-    }*/
-
-
-
-
 
 
     @Override
-    public CourseDto removeCourseByUuid(String uuid) {
+    public void removeCourseByUuid(String uuid) {
         Course course = courseRepository.findByUuid(uuid)
                 .orElseThrow(() -> new RuntimeException("Course not found with UUID: " + uuid));
 
         courseRepository.delete(course);
-        return null;
+
     }
 
     @Override
@@ -87,6 +87,9 @@ public class CourseServiceImpl implements CourseService {
         // Update the existing course with the new data from updatedCourseDto
         existingCourse.setTitle(updatedCourseDto.title());
         existingCourse.setDescription(updatedCourseDto.description());
+        existingCourse.setPrice(updatedCourseDto.price());
+        existingCourse.setIsPaid(updatedCourseDto.isPaid());
+        existingCourse.setDiscount(updatedCourseDto.discount());
 
         // Update other properties as needed...
 
@@ -99,64 +102,46 @@ public class CourseServiceImpl implements CourseService {
         return updatedCourseDtoResponse;
     }
 
-   /* @Override
-    public Optional<Course> getCourseBySectionUuid(String sectionUuid) {
-       // logger.info("Fetching course by section UUID: {}", sectionUuid);
-        Optional<Course> courseOptional = courseRepository.findBySectionsUuid(sectionUuid);
-       // courseOptional.ifPresent(course -> logger.info("Found course: {}", course));
-        return courseOptional;
-    }*/
-
     @Override
-    public List<Section> listAllSectionsByCourseUuid(String uuid) {
-        return courseRepository.findSectionsByUuid(uuid);
+    public Optional<Course> findCourseByUuidWithSections(String courseUuid) {
+        // Retrieve a course from the repository based on its UUID.
+        Optional<Course> optionalCourse = courseRepository.findByUuid(courseUuid);
+
+        // Check if the course with the given UUID exists.
+        if (optionalCourse.isPresent()) {
+            // If the course exists, retrieve its sections from the section repository.
+            Course course = optionalCourse.get();
+            List<Section> sections = sectionRepository.findByCourseUuid(courseUuid);
+
+            // Set the retrieved sections to the course.
+            course.setSections(sections);
+            return Optional.of(course);
+        } else {
+            // If the course does not exist, return an empty Optional.
+            return Optional.empty();
+        }
     }
 
     @Override
-    public CourseDto findCourseByUuid(String uuid) {
-        Course course = courseRepository.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("Course not found with UUID: " + uuid));
-        return courseMapper.courseToCourseDto(course);
+    public List<Course> getCourseByCategoryUuid(String categoryUuid) {
+        //Calls the findByCategoryUuid method from the course repository
+        return courseRepository.findByCategoryUuid(categoryUuid);
     }
-
-
-//    @Override
-//    public Optional<Course> getCourseBySectionUuid(String sectionUuid) {
-//        return Optional.empty();
-//    }
-//    @Override
-//
-//    public List<Course> filterCoursesByCategory(String categoryName) {
-//        // Create a query to filter courses by category name
-//        Query query = new Query(Criteria.where("category.name").is(categoryName));
-//
-//        // Execute the query using MongoTemplate
-//        //List<Course> courses = mongoTemplate.find(query, Course.class);
-//
-//        return mongoTemplate.find(query, Course.class);
-//    }
-
-//    @Override
-//    public Optional<Course> getCourseBySectionUuid(String sectionUuid) {
-//        return courseRepository.findBySectionsUuid(sectionUuid);
-//    }
-
-
 
     @Override
-    public List<Section> getSectionsByCourseUuid(String uuid) {
-        Course course = courseRepository.findByUuid(uuid)
-                .orElseThrow(() -> new RuntimeException("Course not found with UUID: " + uuid));
+    public BigDecimal calculateDiscountedPrice(Course course) {
+        // Check if the course is not null, it is paid, and has a discount
+        if (course != null && Boolean.TRUE.equals(course.getIsPaid()) && course.getDiscount() != null) {
+            // Calculate the discount multiplier based on the percentage discount
+            BigDecimal discountMultiplier = BigDecimal.valueOf(1 - (course.getDiscount().doubleValue() / 100.0));
 
-        List<Section> sections = course.getSections();
-
-        // Log the course and sections details
-        log.info("Course found: {}", course);
-        log.info("Sections associated with the course: {}", sections);
-
-        return sections;
+            // Multiply the original price by the discount multiplier to get the discounted price
+            return course.getPrice().multiply(discountMultiplier);
+        } else {
+            // If any of the conditions fail, return the original price or zero if the course is null
+            return course != null ? course.getPrice() : BigDecimal.ZERO;
+        }
     }
-
 
 
 }

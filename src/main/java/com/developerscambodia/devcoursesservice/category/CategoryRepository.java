@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface CategoryRepository extends MongoRepository<Category,String> {
     Optional<Category> findByUuid(String uuid);
+    List<Category> findByCoursesUuid(String courseUuid);
+
 
 
 }

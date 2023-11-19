@@ -2,9 +2,9 @@ package com.developerscambodia.devcoursesservice.course;
 
 import com.developerscambodia.devcoursesservice.course.web.CourseDto;
 import com.developerscambodia.devcoursesservice.course.web.CreateCourseDto;
-import com.developerscambodia.devcoursesservice.section.Section;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,23 +12,20 @@ public interface CourseService {
 
 
 
-    CreateCourseDto createNewCourse(CreateCourseDto createCourseDto);
+    void createNewCourse(CreateCourseDto createCourseDto);
     Page<CourseDto> findListCourses(int page, int size);
+//    CourseDto findCourseByUuidWithSections(String uuid);
 
 
 
-    CourseDto removeCourseByUuid(String uuid);
+    void removeCourseByUuid(String uuid);
 
     CourseDto editCourseByUuid(String uuid, CourseDto updatedCourseDto);
+    Optional<Course> findCourseByUuidWithSections(String courseUuid);
 
+    List<Course> getCourseByCategoryUuid(String categoryUuid);
 
-
-    List<Section> listAllSectionsByCourseUuid(String uuid);
-    CourseDto findCourseByUuid(String uuid);
-    List<Section> getSectionsByCourseUuid(String uuid);
-
-
-
+    BigDecimal calculateDiscountedPrice(Course course);
 
 
 }
